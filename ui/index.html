@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenClaw Watchdog</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0f1117;
+      --bg2:        #161b27;
+      --bg3:        #1e2538;
+      --border:     #2a3148;
+      --text:       #e2e8f0;
+      --text-muted: #7b8db0;
+      --green:      #22c55e;
+      --green-bg:   #052e16;
+      --red:        #ef4444;
+      --red-bg:     #2d0a0a;
+      --yellow:     #f59e0b;
+      --yellow-bg:  #2d1f02;
+      --blue:       #60a5fa;
+      --blue-bg:    #0c1f3d;
+      --gray:       #94a3b8;
+      --gray-bg:    #1e2538;
+      --accent:     #3b82f6;
+      --radius:     10px;
+      --shadow:     0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-left h1 {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    #next-check {
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gray);
+      transition: background 0.3s;
+    }
+    .sse-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+    /* ── Status badge ───────────────────────────────────────────────────── */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 13px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .status-badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .status-badge.ok          { background: var(--green-bg);  color: var(--green);  border: 1px solid #166534; }
+    .status-badge.fail        { background: var(--red-bg);    color: var(--red);    border: 1px solid #7f1d1d; }
+    .status-badge.unknown     { background: var(--gray-bg);   color: var(--gray);   border: 1px solid var(--border); }
+    .status-badge.restarting  { background: var(--yellow-bg); color: var(--yellow); border: 1px solid #78350f; }
+
+    .status-badge.ok         .dot { background: var(--green);  box-shadow: 0 0 6px var(--green); }
+    .status-badge.fail       .dot { background: var(--red);    box-shadow: 0 0 6px var(--red); animation: pulse 1s ease infinite; }
+    .status-badge.unknown    .dot { background: var(--gray); }
+    .status-badge.restarting .dot { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); animation: pulse 0.7s ease infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    /* ── Main layout ────────────────────────────────────────────────────── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ── Cards ──────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 13px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* ── Stats row ──────────────────────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      padding: 16px;
+      gap: 12px;
+    }
+
+    .stat {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 5px;
+    }
+
+    .stat-value.green { color: var(--green); }
+    .stat-value.red   { color: var(--red); }
+    .stat-value.sm    { font-size: 15px; margin-top: 3px; }
+
+    /* ── Latency chart ──────────────────────────────────────────────────── */
+    .latency-wrap {
+      padding: 16px 20px 0;
+    }
+
+    .latency-meta {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+
+    .latency-current {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--green);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .latency-current.slow { color: var(--yellow); }
+    .latency-current.fail { color: var(--red); }
+
+    .latency-minmaxavg {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .latency-chart-svg {
+      width: 100%;
+      height: 64px;
+      display: block;
+      overflow: visible;
+    }
+
+    .latency-axis {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0 12px;
+      font-size: 10px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Buttons ────────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 15px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .btn:active   { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.45; cursor: default; }
+
+    .btn-primary { background: var(--accent);  color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #2563eb; }
+
+    .btn-danger  { background: #b91c1c; color: #fff; }
+    .btn-danger:hover:not(:disabled)  { background: #991b1b; }
+
+    .btn-ghost   { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover:not(:disabled)   { background: var(--border); }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      padding: 14px 20px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Filter tabs ────────────────────────────────────────────────────── */
+    .filter-tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .filter-tab {
+      padding: 3px 11px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .filter-tab:hover  { color: var(--text); background: var(--bg3); }
+    .filter-tab.active { color: var(--accent); background: var(--blue-bg); border-color: #1d4ed8; }
+
+    /* ── Events table ───────────────────────────────────────────────────── */
+    .events-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .events-table th {
+      padding: 9px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+    }
+
+    .events-table td {
+      padding: 9px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .events-table tr:last-child td { border-bottom: none; }
+    .events-table tr:hover td { background: var(--bg3); }
+
+    .events-table .ts {
+      color: var(--text-muted);
+      font-size: 12px;
+      white-space: nowrap;
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+
+    .events-table .detail {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* ── Type badges ────────────────────────────────────────────────────── */
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .type-check_ok      { background: var(--green-bg);  color: var(--green);  }
+    .type-check_fail    { background: var(--red-bg);    color: var(--red);    }
+    .type-restart_start { background: var(--yellow-bg); color: var(--yellow); }
+    .type-restart_ok    { background: var(--green-bg);  color: var(--green);  }
+    .type-restart_fail  { background: var(--red-bg);    color: var(--red);    }
+    .type-notify_sent   { background: var(--blue-bg);   color: var(--blue);   }
+    .type-notify_fail   { background: var(--yellow-bg); color: var(--yellow); }
+    .type-log_error        { background: var(--red-bg);    color: var(--red);    }
+    .type-log_warn         { background: var(--yellow-bg); color: var(--yellow); }
+    .type-update_available { background: var(--blue-bg);   color: var(--blue);   }
+    .type-unknown          { background: var(--gray-bg);   color: var(--gray);   }
+
+    /* ── Channels card ──────────────────────────────────────────────────── */
+    .channel-list { display: flex; flex-direction: column; }
+
+    .channel-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .channel-row:last-child { border-bottom: none; }
+
+    .channel-icon { font-size: 16px; flex-shrink: 0; }
+
+    .channel-info { flex: 1; min-width: 0; }
+
+    .channel-name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .channel-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .channel-status {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .channel-status.ok   { color: var(--green); }
+    .channel-status.fail { color: var(--red); }
+    .channel-status.unknown { color: var(--text-muted); }
+
+    /* ── Diagnoses card ─────────────────────────────────────────────────── */
+    .diag-list { padding: 4px 0 8px; }
+
+    .diag-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 11px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .diag-item:last-child { border-bottom: none; }
+
+    .diag-sev {
+      flex-shrink: 0;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 5px;
+    }
+
+    .diag-sev.error { background: var(--red);    box-shadow: 0 0 5px var(--red); }
+    .diag-sev.warn  { background: var(--yellow); box-shadow: 0 0 5px var(--yellow); }
+
+    .diag-body { flex: 1; min-width: 0; }
+
+    .diag-cause {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .diag-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      line-height: 1.5;
+    }
+
+    .diag-time {
+      flex-shrink: 0;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      margin-top: 3px;
+    }
+
+    /* ── New-event flash animation ──────────────────────────────────────── */
+    @keyframes flashRow {
+      0%   { background: rgba(59, 130, 246, 0.18); }
+      100% { background: transparent; }
+    }
+
+    tr.new-event td { animation: flashRow 2s ease forwards; }
+
+    /* ── Toast notifications ────────────────────────────────────────────── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 999;
+    }
+
+    .toast {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 16px;
+      font-size: 13px;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      animation: slideIn 0.2s ease;
+      min-width: 200px;
+      max-width: 320px;
+    }
+
+    .toast.success { border-left: 3px solid var(--green); }
+    .toast.error   { border-left: 3px solid var(--red); }
+    .toast.info    { border-left: 3px solid var(--blue); }
+
+    @keyframes slideIn {
+      from { transform: translateX(40px); opacity: 0; }
+      to   { transform: none; opacity: 1; }
+    }
+
+    /* ── Empty state ────────────────────────────────────────────────────── */
+    .empty-state {
+      padding: 36px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    /* ── Spinner ────────────────────────────────────────────────────────── */
+    .spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner.active { display: inline-block; }
+
+    /* ── Update banner ──────────────────────────────────────────────────── */
+    #update-banner {
+      display: none;
+      background: linear-gradient(135deg, #1e3a5f 0%, #1a2d4a 100%);
+      border: 1px solid #2563eb;
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      gap: 14px;
+      align-items: center;
+    }
+
+    #update-banner.visible { display: flex; }
+
+    .update-icon { font-size: 20px; flex-shrink: 0; }
+
+    .update-info { flex: 1; min-width: 0; }
+
+    .update-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--blue);
+    }
+
+    .update-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn-update {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 7px 16px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-update:hover:not(:disabled) { background: #1d4ed8; }
+    .btn-update:disabled { opacity: 0.5; cursor: default; }
+
+    /* ── Responsive ─────────────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      header { padding: 12px 14px; }
+      .header-center { display: none; }
+      main   { padding: 12px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .events-table .detail { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <span style="font-size:20px">🐕</span>
+    <h1>OpenClaw Watchdog</h1>
+  </div>
+  <div class="header-center">
+    <div class="spinner" id="spinner"></div>
+    <span id="next-check">connecting...</span>
+  </div>
+  <div class="header-right">
+    <div class="sse-dot" id="sse-dot" title="Live connection"></div>
+    <div id="status-badge" class="status-badge unknown">
+      <span class="dot"></span>
+      <span id="status-text">Unknown</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Update banner (hidden until update available) -->
+  <div id="update-banner">
+    <span class="update-icon">🆕</span>
+    <div class="update-info">
+      <div class="update-title" id="update-title">New version available</div>
+      <div class="update-sub" id="update-sub">Run <code>openclaw update</code> to upgrade</div>
+    </div>
+    <button class="btn-update" id="btn-update" onclick="runUpdate()">⬆ Update Now</button>
+  </div>
+
+  <!-- Latency chart -->
+  <div class="card">
+    <div class="card-header">
+      <span>Response Time</span>
+      <span class="latency-minmaxavg" id="latency-meta">—</span>
+    </div>
+    <div class="latency-wrap">
+      <div class="latency-meta">
+        <span class="latency-current" id="latency-current">—</span>
+        <span style="font-size:12px;color:var(--text-muted)">last response</span>
+      </div>
+      <svg class="latency-chart-svg" id="latency-svg" viewBox="0 0 600 64" preserveAspectRatio="none">
+        <text x="300" y="36" text-anchor="middle" fill="#7b8db0" font-size="13" font-family="sans-serif">
+          Waiting for data...
+        </text>
+      </svg>
+      <div class="latency-axis">
+        <span id="lat-oldest">—</span>
+        <span id="lat-newest">now</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="card">
+    <div class="card-header">Overview</div>
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-label">Uptime</div>
+        <div class="stat-value green" id="stat-uptime-pct">—</div>
+        <div class="stat-sub" id="stat-uptime-sub">since tracking began</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Total Checks</div>
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-sub" id="stat-fail-count">0 failures</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Last Check</div>
+        <div class="stat-value sm" id="stat-lastcheck">—</div>
+        <div class="stat-sub" id="stat-lastcheck-rel"></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Up Since</div>
+        <div class="stat-value sm" id="stat-upsince">—</div>
+        <div class="stat-sub" id="stat-upsince-dur"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Channels -->
+  <div class="card">
+    <div class="card-header">
+      <span>Channels</span>
+      <span id="channels-meta" style="color:var(--text-muted);font-size:11px">loading...</span>
+    </div>
+    <div id="channels-container">
+      <div class="empty-state" style="padding:20px">Loading...</div>
+    </div>
+  </div>
+
+  <!-- Detected Issues -->
+  <div class="card" id="diag-card">
+    <div class="card-header">
+      <span>Detected Issues</span>
+      <span id="diag-count" style="color:var(--text-muted);font-size:11px">loading...</span>
+    </div>
+    <div id="diag-container">
+      <div class="empty-state">Loading...</div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="card">
+    <div class="card-header">Actions</div>
+    <div class="btn-group">
+      <button class="btn btn-primary" id="btn-check" onclick="manualCheck()">
+        ⚡ Check Now
+      </button>
+      <button class="btn btn-danger" id="btn-restart" onclick="manualRestart()">
+        🔄 Restart Gateway
+      </button>
+      <button class="btn btn-ghost" onclick="loadAll()">
+        ↺ Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Events -->
+  <div class="card">
+    <div class="card-header">
+      <span>Events</span>
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-f="all"     onclick="setFilter('all')">All</button>
+        <button class="filter-tab"        data-f="fail"    onclick="setFilter('fail')">Failures</button>
+        <button class="filter-tab"        data-f="restart" onclick="setFilter('restart')">Restarts</button>
+        <button class="filter-tab"        data-f="notify"  onclick="setFilter('notify')">Notify</button>
+      </div>
+    </div>
+    <div id="events-container">
+      <div class="empty-state">Loading events...</div>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast-container"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let cachedEvents    = [];
+let cachedLatency   = [];
+let cachedDiagnoses = [];
+let cachedChannels  = [];
+let lastEventId     = null;
+let currentFilter   = 'all';
+let nextCheckAt     = null;
+let countdownTimer  = null;
+let cachedUpdate    = null;
+
+const filterFn = {
+  all:     () => true,
+  fail:    e => e.type === 'check_fail',
+  restart: e => e.type.startsWith('restart_'),
+  notify:  e => e.type.startsWith('notify_'),
+};
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+loadAll();
+connectSSE();
+
+// ── SSE real-time connection ───────────────────────────────────────────────
+function connectSSE() {
+  const es = new EventSource('/api/stream');
+
+  es.onopen = () => {
+    document.getElementById('sse-dot').classList.add('live');
+  };
+
+  es.onmessage = (e) => {
+    try {
+      const { type, payload } = JSON.parse(e.data);
+      if (type === 'update') handleLiveUpdate(payload);
+    } catch {}
+  };
+
+  es.onerror = () => {
+    document.getElementById('sse-dot').classList.remove('live');
+    es.close();
+    // Reconnect after 5s
+    setTimeout(connectSSE, 5000);
+  };
+}
+
+function handleLiveUpdate(payload) {
+  // Update status badge immediately
+  renderStatusBadge(payload);
+
+  // Update countdown
+  if (payload.lastCheckAt) {
+    scheduleCountdown(payload.lastCheckAt, payload.checkInterval || 60);
+  }
+
+  // If there's a new event, prepend it and flash
+  if (payload.latestEvent) {
+    const isNew = payload.latestEvent.id !== lastEventId;
+    if (isNew) {
+      lastEventId = payload.latestEvent.id;
+      prependEvent(payload.latestEvent);
+      // Refresh diagnoses if it was a log event
+      const t = payload.latestEvent.type;
+      if (t === 'log_error' || t === 'log_warn') fetchDiagnoses();
+    }
+  }
+
+  // Refresh latency chart on each check
+  fetchLatency();
+
+  // Update channels if included in payload
+  if (payload.channels && payload.channels.length > 0) {
+    cachedChannels = payload.channels;
+    renderChannels(payload.channelsCheckedAt);
+  }
+
+  // Update banner
+  if (payload.update) {
+    cachedUpdate = payload.update;
+    renderUpdateBanner();
+  }
+
+  // Update stats
+  if (payload.stats) {
+    renderStats(payload);
+  }
+}
+
+// ── Data loading ───────────────────────────────────────────────────────────
+async function loadAll() {
+  setSpinner(true);
+  try {
+    const [statusData, eventsData, latencyData, diagData] = await Promise.all([
+      fetch('/api/status').then(r => r.json()),
+      fetch('/api/events').then(r => r.json()),
+      fetch('/api/latency').then(r => r.json()),
+      fetch('/api/diagnoses').then(r => r.json()),
+    ]);
+
+    renderStatusBadge(statusData);
+    renderStats(statusData);
+
+    cachedEvents = eventsData;
+    if (eventsData.length > 0) lastEventId = eventsData[0].id;
+    renderEventsTable(false);
+
+    cachedLatency = latencyData;
+    renderSparkline();
+
+    cachedDiagnoses = diagData;
+    renderDiagnoses();
+
+    if (statusData.channels) {
+      cachedChannels = statusData.channels;
+      renderChannels(statusData.channelsCheckedAt);
+    }
+
+    if (statusData.update) {
+      cachedUpdate = statusData.update;
+      renderUpdateBanner();
+    }
+
+    if (statusData.lastCheck) {
+      scheduleCountdown(statusData.lastCheck, statusData.checkInterval || 60);
+    }
+  } catch (err) {
+    setStatusBadge('unknown');
+    document.getElementById('status-text').textContent = 'Connection error';
+    showToast('Could not reach watchdog: ' + err.message, 'error');
+  } finally {
+    setSpinner(false);
+  }
+}
+
+async function fetchLatency() {
+  try {
+    cachedLatency = await fetch('/api/latency').then(r => r.json());
+    renderSparkline();
+  } catch {}
+}
+
+async function fetchDiagnoses() {
+  try {
+    cachedDiagnoses = await fetch('/api/diagnoses').then(r => r.json());
+    renderDiagnoses();
+  } catch {}
+}
+
+// ── Countdown ──────────────────────────────────────────────────────────────
+function scheduleCountdown(lastCheckAt, intervalSecs) {
+  nextCheckAt = new Date(lastCheckAt).getTime() + intervalSecs * 1000;
+  clearInterval(countdownTimer);
+  countdownTimer = setInterval(tickCountdown, 1000);
+  tickCountdown();
+}
+
+function tickCountdown() {
+  const remaining = Math.ceil((nextCheckAt - Date.now()) / 1000);
+  const el = document.getElementById('next-check');
+  if (!el) return;
+  if (remaining <= 0) {
+    el.textContent = 'checking...';
+  } else {
+    el.textContent = `next check in ${remaining}s`;
+  }
+}
+
+// ── Status rendering ───────────────────────────────────────────────────────
+function renderStatusBadge(data) {
+  if (data.isRestarting) {
+    setStatusBadge('restarting');
+    document.getElementById('status-text').textContent = 'Restarting...';
+  } else if (data.gatewayOk === true) {
+    setStatusBadge('ok');
+    document.getElementById('status-text').textContent = 'Gateway Online';
+  } else if (data.gatewayOk === false) {
+    setStatusBadge('fail');
+    document.getElementById('status-text').textContent = 'Gateway Down';
+  } else {
+    setStatusBadge('unknown');
+    document.getElementById('status-text').textContent = 'Unknown';
+  }
+}
+
+function renderStats(data) {
+  const s = data.stats || {};
+  const total = s.totalChecks || 0;
+  const fails = s.failCount   || 0;
+
+  // Uptime %
+  const upPct = total > 0 ? (((total - fails) / total) * 100).toFixed(1) : null;
+  const uptimePctEl = document.getElementById('stat-uptime-pct');
+  if (upPct !== null) {
+    uptimePctEl.textContent = upPct + '%';
+    uptimePctEl.className = 'stat-value ' + (parseFloat(upPct) >= 99 ? 'green' : parseFloat(upPct) >= 95 ? '' : 'red');
+  }
+
+  setEl('stat-total', total || '—');
+  setEl('stat-fail-count', fails + ' failure' + (fails !== 1 ? 's' : ''));
+
+  if (s.upSince) {
+    setEl('stat-uptime-sub', 'since ' + formatTime(s.upSince));
+  }
+
+  const lastCheck = s.lastCheck || data.lastCheck;
+  if (lastCheck) {
+    setEl('stat-lastcheck', formatTime(lastCheck));
+    setEl('stat-lastcheck-rel', timeAgo(lastCheck));
+  }
+
+  if (s.upSince) {
+    setEl('stat-upsince', formatTime(s.upSince));
+    setEl('stat-upsince-dur', uptimeDuration(s.upSince));
+  }
+}
+
+// ── Sparkline ─────────────────────────────────────────────────────────────
+function renderSparkline() {
+  const svg  = document.getElementById('latency-svg');
+  const data = cachedLatency;
+
+  // Update current latency display
+  const latEl = document.getElementById('latency-current');
+  const lastPoint = data.length > 0 ? data[data.length - 1] : null;
+  if (lastPoint) {
+    if (lastPoint.ms === null) {
+      latEl.textContent = 'DOWN';
+      latEl.className = 'latency-current fail';
+    } else {
+      latEl.textContent = lastPoint.ms + 'ms';
+      latEl.className = 'latency-current' + (lastPoint.ms > 500 ? ' slow' : '');
+    }
+  }
+
+  // Valid (non-null) ms values
+  const valid = data.filter(d => d.ms !== null).map(d => d.ms);
+  if (valid.length < 2) {
+    svg.innerHTML = `<text x="300" y="36" text-anchor="middle" fill="#7b8db0"
+      font-size="13" font-family="sans-serif">Waiting for data...</text>`;
+    document.getElementById('latency-meta').textContent = '—';
+    return;
+  }
+
+  // Stats
+  const minMs = Math.min(...valid);
+  const maxMs = Math.max(...valid);
+  const avgMs = Math.round(valid.reduce((a, b) => a + b, 0) / valid.length);
+  document.getElementById('latency-meta').textContent =
+    `min ${minMs}ms · avg ${avgMs}ms · max ${maxMs}ms`;
+
+  // Chart dimensions (viewBox)
+  const W = 600, H = 64;
+  const PAD = 4;
+  const yRange = Math.max(maxMs, 50); // at least 50ms range on y axis
+  const n = data.length;
+  const xStep = W / Math.max(n - 1, 1);
+
+  const toY = (ms) => H - PAD - ((ms / yRange) * (H - PAD * 2));
+
+  // Separate into line segments (split at null gaps)
+  const segments = [];
+  let current = [];
+  for (const d of data) {
+    if (d.ms !== null) {
+      current.push(d);
+    } else {
+      if (current.length > 1) segments.push(current);
+      current = [];
+    }
+  }
+  if (current.length > 1) segments.push(current);
+
+  // Map data index to x coordinate
+  const dataWithIndex = data.map((d, i) => ({ ...d, x: i * xStep }));
+
+  // Build SVG
+  let html = `<defs>
+    <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#22c55e" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
+    </linearGradient>
+  </defs>`;
+
+  // Grid line at middle of y axis
+  const midY = H / 2;
+  html += `<line x1="0" y1="${midY}" x2="${W}" y2="${midY}"
+    stroke="#2a3148" stroke-width="1" stroke-dasharray="3,4"/>`;
+
+  // Fill area for each segment
+  segments.forEach(seg => {
+    const pts = seg.map(d => {
+      const i = data.indexOf(d);
+      return [i * xStep, toY(d.ms)];
+    });
+    const fillD = `M ${pts[0][0]},${H} ` +
+      pts.map(([x, y]) => `L ${x},${y}`).join(' ') +
+      ` L ${pts[pts.length - 1][0]},${H} Z`;
+    html += `<path d="${fillD}" fill="url(#lg)"/>`;
+  });
+
+  // Line for each segment
+  segments.forEach(seg => {
+    const pts = seg.map(d => {
+      const i = data.indexOf(d);
+      return `${(i * xStep).toFixed(1)},${toY(d.ms).toFixed(1)}`;
+    }).join(' ');
+    html += `<polyline points="${pts}" fill="none"
+      stroke="#22c55e" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>`;
+  });
+
+  // Failure markers (vertical red lines)
+  dataWithIndex.forEach(d => {
+    if (d.ms === null) {
+      html += `<line x1="${d.x.toFixed(1)}" y1="0" x2="${d.x.toFixed(1)}" y2="${H}"
+        stroke="#ef4444" stroke-width="1.5" stroke-opacity="0.6"/>`;
+    }
+  });
+
+  // Latest dot
+  const last = dataWithIndex[dataWithIndex.length - 1];
+  if (last && last.ms !== null) {
+    const lx = last.x.toFixed(1);
+    const ly = toY(last.ms).toFixed(1);
+    html += `<circle cx="${lx}" cy="${ly}" r="3.5" fill="#22c55e" stroke="#0f1117" stroke-width="1.5"/>`;
+  }
+
+  svg.innerHTML = html;
+
+  // Update axis labels
+  if (data.length > 0) {
+    const oldest = data[0];
+    const newest = data[data.length - 1];
+    document.getElementById('lat-oldest').textContent = timeAgo(oldest.t);
+    document.getElementById('lat-newest').textContent = timeAgo(newest.t);
+  }
+}
+
+// ── Channels ───────────────────────────────────────────────────────────────
+function renderChannels(checkedAt) {
+  const container = document.getElementById('channels-container');
+  const metaEl    = document.getElementById('channels-meta');
+  const data = cachedChannels;
+
+  if (!data || data.length === 0) {
+    container.innerHTML = `<div class="empty-state" style="padding:20px">No channels configured — first check runs 30s after daemon start</div>`;
+    metaEl.textContent = '—';
+    return;
+  }
+
+  const okCount = data.filter(c => c.ok).length;
+  metaEl.textContent = checkedAt
+    ? `${okCount}/${data.length} OK · ${timeAgo(checkedAt)}`
+    : `${okCount}/${data.length} OK`;
+
+  const rows = data.map(ch => {
+    const statusCls  = ch.ok ? 'ok' : 'fail';
+    const statusText = ch.ok ? '✓ Connected' : `✗ ${escHtml(ch.error || 'Error')}`;
+    const sub = ch.ok && ch.botName ? `@${escHtml(ch.botName)}` : '';
+    return `<div class="channel-row">
+      <span class="channel-icon">✈️</span>
+      <div class="channel-info">
+        <div class="channel-name">${escHtml(ch.accountId)}</div>
+        ${sub ? `<div class="channel-sub">${sub}</div>` : ''}
+      </div>
+      <span class="channel-status ${statusCls}">${statusText}</span>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = `<div class="channel-list">${rows}</div>`;
+}
+
+// ── Diagnoses ──────────────────────────────────────────────────────────────
+function renderDiagnoses() {
+  const container = document.getElementById('diag-container');
+  const countEl   = document.getElementById('diag-count');
+  const data = cachedDiagnoses;
+
+  if (!data || data.length === 0) {
+    container.innerHTML = `<div class="empty-state" style="padding:20px">No issues detected in log files</div>`;
+    countEl.textContent = 'none';
+    return;
+  }
+
+  countEl.textContent = `${data.length} issue${data.length !== 1 ? 's' : ''} (last 5 min)`;
+
+  const items = data.map(d => {
+    const sevCls = d.severity === 'error' ? 'error' : 'warn';
+    return `<div class="diag-item">
+      <div class="diag-sev ${sevCls}"></div>
+      <div class="diag-body">
+        <div class="diag-cause">${escHtml(d.cause)}</div>
+        <div class="diag-desc">${escHtml(d.description)}</div>
+      </div>
+      <div class="diag-time">${timeAgo(d.t)}</div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = `<div class="diag-list">${items}</div>`;
+}
+
+// ── Events table ───────────────────────────────────────────────────────────
+function renderEventsTable(flashFirst) {
+  const container = document.getElementById('events-container');
+  const filtered  = cachedEvents.filter(filterFn[currentFilter]);
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state">No ${currentFilter === 'all' ? '' : currentFilter + ' '}events recorded yet</div>`;
+    return;
+  }
+
+  const rows = filtered.slice(0, 100).map((ev, idx) => {
+    const flash = flashFirst && idx === 0 ? ' class="new-event"' : '';
+    return `<tr${flash}>
+      <td class="ts">${escHtml(formatTime(ev.timestamp))}</td>
+      <td>${typeBadge(ev.type)}</td>
+      <td>${escHtml(ev.message)}${ev.detail ? `<span class="detail">${escHtml(ev.detail)}</span>` : ''}</td>
+    </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <table class="events-table">
+      <thead>
+        <tr>
+          <th style="width:160px">Time</th>
+          <th style="width:120px">Type</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function prependEvent(ev) {
+  // Check if this event passes the current filter
+  if (!filterFn[currentFilter](ev)) return;
+
+  // If not already in cache, prepend
+  if (!cachedEvents.find(e => e.id === ev.id)) {
+    cachedEvents = [ev, ...cachedEvents];
+  }
+  renderEventsTable(true);
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.f === f);
+  });
+  renderEventsTable(false);
+}
+
+// ── Actions ────────────────────────────────────────────────────────────────
+// ── Update ─────────────────────────────────────────────────────────────────
+function renderUpdateBanner() {
+  const u = cachedUpdate;
+  const banner = document.getElementById('update-banner');
+  if (!u || !u.hasUpdate) {
+    banner.classList.remove('visible');
+    return;
+  }
+  banner.classList.add('visible');
+  document.getElementById('update-title').textContent =
+    `新版本可用: OpenClaw ${u.availableVersion}`;
+  document.getElementById('update-sub').textContent =
+    `当前版本: ${u.currentVersion || '?'} · 点击更新或运行 openclaw update`;
+}
+
+async function runUpdate() {
+  if (!confirm(`升级 OpenClaw 到 ${cachedUpdate?.availableVersion}？\nGateway 将短暂中断。`)) return;
+  const btn = document.getElementById('btn-update');
+  btn.disabled = true;
+  btn.textContent = '⏳ 更新中...';
+  try {
+    const res = await fetch('/api/update/run', { method: 'POST' }).then(r => r.json());
+    if (res.success) {
+      showToast('OpenClaw 已成功更新！', 'success');
+      document.getElementById('update-banner').classList.remove('visible');
+    } else {
+      showToast('更新失败: ' + res.error, 'error');
+      btn.disabled = false;
+      btn.textContent = '⬆ Update Now';
+    }
+  } catch (err) {
+    showToast('更新请求失败: ' + err.message, 'error');
+    btn.disabled = false;
+    btn.textContent = '⬆ Update Now';
+  }
+}
+
+async function manualCheck() {
+  const btn = document.getElementById('btn-check');
+  btn.disabled = true;
+  btn.textContent = '⏳ Checking...';
+  try {
+    const res = await fetch('/api/check', { method: 'POST' }).then(r => r.json());
+    if (res.ok) {
+      showToast(`Gateway OK — ${res.latencyMs}ms`, 'success');
+    } else {
+      showToast(`Gateway unreachable: ${res.error}`, 'error');
+    }
+    await loadAll();
+  } catch (err) {
+    showToast('Check failed: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⚡ Check Now';
+  }
+}
+
+async function manualRestart() {
+  if (!confirm('Restart the OpenClaw gateway? This will briefly interrupt all connections.')) return;
+  const btn = document.getElementById('btn-restart');
+  btn.disabled = true;
+  btn.textContent = '⏳ Restarting...';
+  try {
+    const res = await fetch('/api/restart', { method: 'POST' }).then(r => r.json());
+    if (res.success) {
+      showToast(`Gateway restarted in ${res.elapsedSeconds}s`, 'success');
+    } else {
+      showToast(`Restart failed: ${res.error}`, 'error');
+    }
+    await loadAll();
+  } catch (err) {
+    showToast('Restart failed: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔄 Restart Gateway';
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function setStatusBadge(cls) {
+  document.getElementById('status-badge').className = 'status-badge ' + cls;
+}
+
+function setEl(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function setSpinner(active) {
+  document.getElementById('spinner').classList.toggle('active', active);
+}
+
+function formatTime(iso) {
+  if (!iso) return '—';
+  // Handle numeric timestamps too (from latency history)
+  return new Date(iso).toLocaleString('zh-CN', {
+    month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  });
+}
+
+function timeAgo(isoOrMs) {
+  const t = typeof isoOrMs === 'number' ? isoOrMs : new Date(isoOrMs).getTime();
+  const diff = Math.floor((Date.now() - t) / 1000);
+  if (diff < 5)     return 'just now';
+  if (diff < 60)    return diff + 's ago';
+  if (diff < 3600)  return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  return Math.floor(diff / 86400) + 'd ago';
+}
+
+function uptimeDuration(iso) {
+  const secs = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (secs < 60)    return secs + 's';
+  if (secs < 3600)  return Math.floor(secs / 60) + 'm';
+  if (secs < 86400) return Math.floor(secs / 3600) + 'h ' + Math.floor((secs % 3600) / 60) + 'm';
+  return Math.floor(secs / 86400) + 'd ' + Math.floor((secs % 86400) / 3600) + 'h';
+}
+
+function typeBadge(type) {
+  const labels = {
+    check_ok:      'Check OK',
+    check_fail:    'Check Fail',
+    restart_start: 'Restarting',
+    restart_ok:    'Restart OK',
+    restart_fail:  'Restart Fail',
+    notify_sent:   'Notify Sent',
+    notify_fail:   'Notify Fail',
+    log_error:        'Log Error',
+    log_warn:         'Log Warn',
+    update_available: 'Update',
+  };
+  const label = labels[type] || type;
+  const cls   = 'type-' + (labels[type] ? type : 'unknown');
+  return `<span class="type-badge ${cls}">${label}</span>`;
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+</script>
+</body>
+</html>

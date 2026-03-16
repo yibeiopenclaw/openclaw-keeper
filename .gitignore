@@ -1,0 +1,16 @@
+node_modules/
+
+# Personal fix scripts (not part of the project)
+fix-en0-dhcp.sh
+fix-openclaw-telegram.sh
+com.yibeiou.fix-en0-dhcp.plist
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# npm pack artifacts
+*.tgz

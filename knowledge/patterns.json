@@ -1,0 +1,182 @@
+[
+  {
+    "id": "tls-set-session",
+    "match": "Cannot read properties of null.*setSession|setSession.*null",
+    "severity": "error",
+    "cause": "TLS session crash (undici bug)",
+    "description": "Node.js undici TLS session resumption crash. Known bug in openclaw 2026.3.x. Gateway will restart.",
+    "autofix": true,
+    "notify": false
+  },
+  {
+    "id": "mutex-lock",
+    "match": "mutex lock failed|libc\\+\\+abi.*mutex|pthread_mutex",
+    "severity": "error",
+    "cause": "Mutex lock failure (多实例冲突)",
+    "description": "Multiple gateway instances competing for the same resources. Caused by rapid restart loop.",
+    "autofix": true,
+    "notify": false
+  },
+  {
+    "id": "deletewebhook-loop",
+    "match": "deleteWebhook.*failed|deleteWebhook.*error|deleteWebhook.*ECONNREFUSED|deleteWebhook.*ETIMEDOUT",
+    "severity": "warn",
+    "cause": "Telegram deleteWebhook 死循环 (IPv6 连接失败)",
+    "description": "Telegram API unreachable via IPv6. Ensure NODE_OPTIONS=--dns-result-order=ipv4first is set in LaunchAgent.",
+    "autofix": false,
+    "notify": true
+  },
+  {
+    "id": "port-in-use",
+    "match": "EADDRINUSE.*18789|address already in use.*18789",
+    "severity": "error",
+    "cause": "端口 18789 被占用",
+    "description": "Another process is holding port 18789. Old gateway instance was not fully stopped.",
+    "autofix": true,
+    "notify": false
+  },
+  {
+    "id": "invalid-config-key",
+    "match": "Unrecognized key|unrecognized configuration key|Invalid config at.*openclaw\\.json",
+    "severity": "error",
+    "cause": "配置文件无效字段",
+    "description": "openclaw.json contains an unrecognized key (e.g. agents.defaults.model.fallback). Run: openclaw doctor --fix  or  openclaw config validate",
+    "autofix": false,
+    "notify": true
+  },
+  {
+    "id": "context-window",
+    "match": "context window too small|contextWindow.*16000|contextWindow.*too small|low context window|blocked model.*context window",
+    "severity": "warn",
+    "cause": "模型 contextWindow 配置过小",
+    "description": "Model contextWindow is below the required minimum (16000). Agent execution will be blocked. Run: openclaw doctor --fix  or set a model with larger context via: openclaw models set <model>",
+    "autofix": false,
+    "notify": true
+  },
+  {
+    "id": "token-invalid",
+    "match": "getMe.*404|bot.*token.*invalid|Unauthorized.*401|channel exited.*401|401: Unauthorized",
+    "severity": "error",
+    "cause": "Telegram Bot Token 无效或过期",
+    "description": "Bot token rejected by Telegram API (401 Unauthorized or 404 Not Found). Get a new token from @BotFather.",
+    "autofix": false,
+    "notify": true
+  },
+  {
+    "id": "sigterm-timeout",
+    "match": "SIGTERM.*timeout|graceful shutdown.*timeout|drain.*timeout",
+    "severity": "warn",
+    "cause": "Gateway 关闭超时",
+    "description": "Gateway did not shut down cleanly within the timeout window.",
+    "autofix": false,
+    "notify": true
+  },
+  {
+    "id": "out-of-memory",
+    "match": "JavaScript heap out of memory|ENOMEM|Allocation failed",
+    "severity": "error",
+    "cause": "内存不足 (OOM)",
+    "description": "Node.js ran out of heap memory. Consider increasing --max-old-space-size.",
+    "autofix": true,
+    "notify": false
+  },
+  {
+    "id": "econnreset",
+    "match": "ECONNRESET|socket hang up|read ECONNRESET",
+    "severity": "warn",
+    "cause": "连接被重置",
+    "description": "Connection reset, likely a transient network issue.",
+    "autofix": false,
+    "notify": true
+  },
+  {
+    "id": "telegram-rate-limit",
+    "match": "429: Too Many Requests|retry after \\d+|FloodWait",
+    "severity": "warn",
+    "cause": "Telegram API 触发频率限制 (429)",
+    "description": "Bot is sending too many requests. Telegram enforces per-bot rate limits. Gateway will auto-retry after the specified delay.",
+    "autofix": false,
+    "notify": true
+  },
+  {
+    "id": "oauth-token-refresh",
+    "match": "OAuth token refresh failed for|Failed to refresh OAuth token|Please try again or re-authenticate",
+    "severity": "error",
+    "cause": "OAuth 凭证过期，需要重新授权",
+    "description": "OAuth token for a model provider (e.g. openai-codex) has expired. Run: openclaw models auth login --provider <provider>",
+    "autofix": false,
+    "notify": true
+  },
+  {
+    "id": "all-models-failed",
+    "match": "All models failed \\(\\d+\\)|Embedded agent failed before reply.*All models failed",
+    "severity": "error",
+    "cause": "所有模型提供商均失败",
+    "description": "Complete model failover — all configured LLM providers returned errors. Check OAuth tokens and network connectivity.",
+    "autofix": false,
+    "notify": true
+  },
+  {
+    "id": "model-timeout",
+    "match": "LLM request timed out|llm.*timed out|model.*request.*timeout",
+    "severity": "warn",
+    "cause": "LLM 请求超时",
+    "description": "Model API did not respond within the timeout window. May be transient overload on the provider side.",
+    "autofix": false,
+    "notify": true
+  },
+  {
+    "id": "telegram-502",
+    "match": "502: Bad Gateway|telegram.*502|sendChatAction.*502|sendMessage.*502",
+    "severity": "warn",
+    "cause": "Telegram 服务器返回 502 Bad Gateway",
+    "description": "Telegram API server is temporarily overloaded or down. This is on Telegram's side — gateway will retry automatically.",
+    "autofix": false,
+    "notify": true
+  },
+  {
+    "id": "telegram-network-fail",
+    "match": "Network request for '.*' failed!|telegram.*network.*failed|message failed: Network request",
+    "severity": "warn",
+    "cause": "Telegram API 网络请求失败",
+    "description": "Gateway cannot reach api.telegram.org. May be a transient network issue or DNS failure.",
+    "autofix": false,
+    "notify": true
+  },
+  {
+    "id": "model-403",
+    "match": "403 status code.*auth|403 Forbidden.*model|model.*403.*auth",
+    "severity": "error",
+    "cause": "模型 API 返回 403 Forbidden",
+    "description": "Model provider rejected the request with 403. Check API key permissions or account status for the provider.",
+    "autofix": false,
+    "notify": false
+  },
+  {
+    "id": "embedded-agent-failed",
+    "match": "Embedded agent failed before reply",
+    "severity": "error",
+    "cause": "内嵌 Agent 在回复前崩溃",
+    "description": "An embedded agent failed before generating a reply. Check model provider status, OAuth tokens, and context window settings.",
+    "autofix": false,
+    "notify": false
+  },
+  {
+    "id": "reasoning-effort-invalid",
+    "match": "reasoning_effort.*Input should be|literal_error.*reasoning_effort",
+    "severity": "warn",
+    "cause": "模型 API 参数 reasoning_effort 值无效",
+    "description": "Gateway sent an invalid reasoning_effort value (e.g. 'minimal'). Valid values: 'low', 'medium', 'high'. This is a bug in openclaw.",
+    "autofix": false,
+    "notify": true
+  },
+  {
+    "id": "fetch-failed",
+    "match": "Non-fatal unhandled rejection.*TypeError: fetch failed|unhandled rejection.*fetch failed",
+    "severity": "warn",
+    "cause": "HTTP fetch 请求失败 (非致命)",
+    "description": "An outbound HTTP request failed. Gateway marked it as non-fatal and continues. Likely transient network issue.",
+    "autofix": false,
+    "notify": true
+  }
+]

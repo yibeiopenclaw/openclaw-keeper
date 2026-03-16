@@ -1,0 +1,34 @@
+{
+  "name": "openclaw-watchdog",
+  "version": "0.1.0",
+  "description": "Health monitor, auto-recovery daemon and log diagnostics for OpenClaw gateway",
+  "type": "module",
+  "bin": {
+    "openclaw-watchdog": "./bin/cli.mjs"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "ui/",
+    "knowledge/"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "openclaw",
+    "watchdog",
+    "gateway",
+    "monitor",
+    "health-check",
+    "telegram",
+    "launchd",
+    "macos"
+  ],
+  "author": "yibeiou",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yibeiou/openclaw-watchdog.git"
+  }
+}

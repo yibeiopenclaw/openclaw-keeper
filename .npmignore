@@ -1,0 +1,14 @@
+# Development and local files
+.claude/
+CLAUDE.md
+DESIGN.md
+.gitignore
+*.tgz
+*.sh
+*.plist
+fix-openclaw-telegram.sh
+fix-en0-dhcp.sh
+com.yibeiou.fix-en0-dhcp.plist
+
+# OS
+.DS_Store
