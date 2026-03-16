@@ -36,10 +36,10 @@
 ## 架构
 
 ```
-openclaw-watchdog/
+openclaw-keeper/
 ├── bin/cli.mjs              # CLI 入口 (start/stop/status/logs/chat/setup/install...)
 ├── src/
-│   ├── config.mjs           # 读取 ~/.openclaw/openclaw.json + ~/.openclaw-watchdog/config.json
+│   ├── config.mjs           # 读取 ~/.openclaw/openclaw.json + ~/.openclaw-keeper/config.json
 │   ├── store.mjs            # 事件日志 (events.json) + 延迟历史 (latency.json)
 │   ├── monitor.mjs          # HTTPS 健康检查 + 重启逻辑
 │   ├── daemon.mjs           # 主循环：健康检查 + 心跳 + 日志监控 + SSE 推送
@@ -57,7 +57,7 @@ openclaw-watchdog/
 
 ---
 
-## 数据目录 (~/.openclaw-watchdog/)
+## 数据目录 (~/.openclaw-keeper/)
 
 | 文件 | 内容 |
 |------|------|
@@ -120,10 +120,10 @@ openclaw-watchdog/
 ## 安装流程（用户视角）
 
 ```bash
-npm install -g openclaw-watchdog
-openclaw-watchdog setup      # 配置 Telegram Chat ID、账号、心跳间隔
-openclaw-watchdog install    # 注册 LaunchAgent，开机自启
-openclaw-watchdog status     # 查看状态
-openclaw-watchdog chat       # 终端交互
+npm install -g openclaw-keeper
+openclaw-keeper setup      # 配置 Telegram Chat ID、账号、心跳间隔
+openclaw-keeper install    # 注册 LaunchAgent，开机自启
+openclaw-keeper status     # 查看状态
+openclaw-keeper chat       # 终端交互
 # 浏览器访问 http://localhost:19877
 ```

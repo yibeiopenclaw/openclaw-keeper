@@ -15,7 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = path.resolve(__dirname, '..', 'bin', 'cli.mjs');
 
 const LAUNCH_AGENTS_DIR = path.join(os.homedir(), 'Library', 'LaunchAgents');
-const PLIST_LABEL = 'com.yibeiou.openclaw-watchdog';
+const PLIST_LABEL = 'com.yibeiou.openclaw-keeper';
 const PLIST_PATH = path.join(LAUNCH_AGENTS_DIR, `${PLIST_LABEL}.plist`);
 
 /**
@@ -47,7 +47,7 @@ function buildPlist(nodeBin) {
     '/sbin',
   ].join(':');
 
-  const logDir = path.join(os.homedir(), '.openclaw-watchdog');
+  const logDir = path.join(os.homedir(), '.openclaw-keeper');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
@@ -101,7 +101,7 @@ export async function installLaunchAgent() {
   fs.mkdirSync(LAUNCH_AGENTS_DIR, { recursive: true });
 
   // Ensure watchdog dir exists for log files
-  const watchdogDir = path.join(os.homedir(), '.openclaw-watchdog');
+  const watchdogDir = path.join(os.homedir(), '.openclaw-keeper');
   fs.mkdirSync(watchdogDir, { recursive: true });
 
   const nodeBin = await findNodeBin();

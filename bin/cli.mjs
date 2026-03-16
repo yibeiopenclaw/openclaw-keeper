@@ -25,7 +25,7 @@ const execAsync = promisify(exec);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Paths
-const WATCHDOG_DIR  = path.join(os.homedir(), '.openclaw-watchdog');
+const WATCHDOG_DIR  = path.join(os.homedir(), '.openclaw-keeper');
 const PID_FILE      = path.join(WATCHDOG_DIR, 'daemon.pid');
 const LOG_FILE      = path.join(WATCHDOG_DIR, 'daemon.log');
 
@@ -301,7 +301,7 @@ async function cmdLogsFollow() {
   // Check daemon is running
   const pid = readPid();
   if (!pid || !isProcessRunning(pid)) {
-    console.log(red('  Daemon is not running. Start it first: openclaw-watchdog start'));
+    console.log(red('  Daemon is not running. Start it first: openclaw-keeper start'));
     process.exit(1);
   }
 
@@ -457,7 +457,7 @@ async function cmdWeb() {
 
   if (!serverRunning) {
     console.log(yellow(`Web server not responding at ${url}`));
-    console.log(`Start the watchdog first: ${bold('openclaw-watchdog start')}`);
+    console.log(`Start the watchdog first: ${bold('openclaw-keeper start')}`);
     console.log(`Or start in foreground with web server for quick use.`);
     // Open anyway — maybe the daemon is starting
   }
@@ -664,9 +664,9 @@ async function cmdSetup() {
 
   console.log('');
   console.log(`  Next steps:`);
-  console.log(`    ${cyan('openclaw-watchdog start')}    — start the daemon`);
-  console.log(`    ${cyan('openclaw-watchdog install')}  — auto-start at login (macOS)`);
-  console.log(`    ${cyan('openclaw-watchdog web')}      — open the dashboard`);
+  console.log(`    ${cyan('openclaw-keeper start')}    — start the daemon`);
+  console.log(`    ${cyan('openclaw-keeper install')}  — auto-start at login (macOS)`);
+  console.log(`    ${cyan('openclaw-keeper web')}      — open the dashboard`);
   console.log('');
 }
 
@@ -720,7 +720,7 @@ async function cmdChat() {
   if (!daemonOk) {
     console.log('');
     console.log(yellow(`  Watchdog daemon not reachable at ${base}`));
-    console.log(`  Start it first: ${cyan('openclaw-watchdog start')}`);
+    console.log(`  Start it first: ${cyan('openclaw-keeper start')}`);
     console.log('');
     return;
   }
@@ -904,10 +904,10 @@ async function cmdChat() {
 /** help */
 function cmdHelp() {
   console.log(`
-${bold('openclaw-watchdog')} — Health monitor and auto-recovery for OpenClaw gateway
+${bold('openclaw-keeper')} — Health monitor and auto-recovery for OpenClaw gateway
 
 ${bold('USAGE')}
-  openclaw-watchdog <command> [options]
+  openclaw-keeper <command> [options]
 
 ${bold('COMMANDS')}
   start [--foreground]   Start the watchdog daemon
@@ -924,22 +924,22 @@ ${bold('COMMANDS')}
   setup                  Interactive configuration wizard
 
 ${bold('EXAMPLES')}
-  openclaw-watchdog setup
-  openclaw-watchdog start
-  openclaw-watchdog status
-  openclaw-watchdog chat
-  openclaw-watchdog logs --tail 20
-  openclaw-watchdog logs --follow
-  openclaw-watchdog diagnose
-  openclaw-watchdog diagnose --lines 5000
-  openclaw-watchdog web
-  openclaw-watchdog install
+  openclaw-keeper setup
+  openclaw-keeper start
+  openclaw-keeper status
+  openclaw-keeper chat
+  openclaw-keeper logs --tail 20
+  openclaw-keeper logs --follow
+  openclaw-keeper diagnose
+  openclaw-keeper diagnose --lines 5000
+  openclaw-keeper web
+  openclaw-keeper install
 
 ${bold('DATA')}
-  Config:   ~/.openclaw-watchdog/config.json
-  Events:   ~/.openclaw-watchdog/events.json
-  PID:      ~/.openclaw-watchdog/daemon.pid
-  Log:      ~/.openclaw-watchdog/daemon.log
+  Config:   ~/.openclaw-keeper/config.json
+  Events:   ~/.openclaw-keeper/events.json
+  PID:      ~/.openclaw-keeper/daemon.pid
+  Log:      ~/.openclaw-keeper/daemon.log
   Web:      http://localhost:19877
 `);
 }
@@ -987,6 +987,6 @@ switch (command) {
     break;
   default:
     console.error(red(`Unknown command: ${command}`));
-    console.log(`Run ${bold('openclaw-watchdog help')} for usage.`);
+    console.log(`Run ${bold('openclaw-keeper help')} for usage.`);
     process.exit(1);
 }

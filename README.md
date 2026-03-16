@@ -27,7 +27,7 @@ An always-on local daemon that monitors your [OpenClaw](https://openclaw.ai) gat
 ## Install
 
 ```bash
-npm install -g openclaw-watchdog
+npm install -g openclaw-keeper
 ```
 
 ---
@@ -35,7 +35,7 @@ npm install -g openclaw-watchdog
 ## Setup
 
 ```bash
-openclaw-watchdog setup
+openclaw-keeper setup
 ```
 
 Interactive wizard that configures:
@@ -52,10 +52,10 @@ Interactive wizard that configures:
 
 ```bash
 # Run in foreground (useful for testing)
-openclaw-watchdog start
+openclaw-keeper start
 
 # Install as macOS LaunchAgent (auto-start on login)
-openclaw-watchdog install
+openclaw-keeper install
 ```
 
 Then open the dashboard: **http://localhost:19877**
@@ -65,17 +65,17 @@ Then open the dashboard: **http://localhost:19877**
 ## CLI Commands
 
 ```bash
-openclaw-watchdog status          # Show current state
-openclaw-watchdog start           # Start daemon in foreground
-openclaw-watchdog stop            # Stop daemon
-openclaw-watchdog install         # Register LaunchAgent (macOS)
-openclaw-watchdog uninstall       # Remove LaunchAgent
-openclaw-watchdog setup           # Run setup wizard
-openclaw-watchdog chat            # Interactive REPL (status/check/restart/diagnoses)
-openclaw-watchdog diagnose        # Scan gateway logs for known error patterns
-openclaw-watchdog logs            # Show recent events
-openclaw-watchdog logs --follow   # Stream events live (SSE)
-openclaw-watchdog web             # Open dashboard in browser
+openclaw-keeper status          # Show current state
+openclaw-keeper start           # Start daemon in foreground
+openclaw-keeper stop            # Stop daemon
+openclaw-keeper install         # Register LaunchAgent (macOS)
+openclaw-keeper uninstall       # Remove LaunchAgent
+openclaw-keeper setup           # Run setup wizard
+openclaw-keeper chat            # Interactive REPL (status/check/restart/diagnoses)
+openclaw-keeper diagnose        # Scan gateway logs for known error patterns
+openclaw-keeper logs            # Show recent events
+openclaw-keeper logs --follow   # Stream events live (SSE)
+openclaw-keeper web             # Open dashboard in browser
 ```
 
 ---
@@ -139,10 +139,10 @@ Notifications for `error` patterns are sent immediately; `warn` patterns have a 
 ## Architecture
 
 ```
-openclaw-watchdog/
+openclaw-keeper/
 ├── bin/cli.mjs         # CLI entry (start/stop/setup/install/chat/diagnose...)
 ├── src/
-│   ├── config.mjs      # Reads ~/.openclaw/openclaw.json + ~/.openclaw-watchdog/config.json
+│   ├── config.mjs      # Reads ~/.openclaw/openclaw.json + ~/.openclaw-keeper/config.json
 │   ├── daemon.mjs      # Main loop: health check + heartbeat + log watcher + SSE push
 │   ├── monitor.mjs     # HTTPS health check + restart logic
 │   ├── store.mjs       # Event log (events.json) + latency history (latency.json)
@@ -160,7 +160,7 @@ openclaw-watchdog/
 
 ---
 
-## Data Directory (`~/.openclaw-watchdog/`)
+## Data Directory (`~/.openclaw-keeper/`)
 
 | File | Contents |
 |------|----------|

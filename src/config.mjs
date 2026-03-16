@@ -7,7 +7,7 @@ import path from 'path';
 import os from 'os';
 
 const OPENCLAW_CONFIG_PATH = path.join(os.homedir(), '.openclaw', 'openclaw.json');
-const WATCHDOG_DIR = path.join(os.homedir(), '.openclaw-watchdog');
+const WATCHDOG_DIR = path.join(os.homedir(), '.openclaw-keeper');
 const WATCHDOG_CONFIG_PATH = path.join(WATCHDOG_DIR, 'config.json');
 
 const DEFAULT_WATCHDOG_CONFIG = {
@@ -65,7 +65,7 @@ export function getTelegramAccounts(config) {
 }
 
 /**
- * Reads ~/.openclaw-watchdog/config.json and returns merged config with defaults.
+ * Reads ~/.openclaw-keeper/config.json and returns merged config with defaults.
  * @returns {object}
  */
 export function getWatchdogConfig() {

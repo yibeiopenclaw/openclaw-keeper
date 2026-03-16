@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`openclaw-watchdog` is a Node.js ESM daemon that monitors the OpenClaw gateway (`https://127.0.0.1:18789/`), auto-restarts it on failure, diagnoses known errors from logs, and sends alerts via Telegram/Discord/Slack. Installed as a macOS LaunchAgent for persistent operation.
+`openclaw-keeper` is a Node.js ESM daemon that monitors the OpenClaw gateway (`https://127.0.0.1:18789/`), auto-restarts it on failure, diagnoses known errors from logs, and sends alerts via Telegram/Discord/Slack. Installed as a macOS LaunchAgent for persistent operation.
 
 ## Running the Watchdog
 
@@ -16,13 +16,13 @@ node bin/cli.mjs status
 node bin/cli.mjs restart   # not supported — use stop + start
 
 # Production: installed globally
-openclaw-watchdog start
-openclaw-watchdog status
-openclaw-watchdog chat       # interactive REPL
-openclaw-watchdog diagnose   # scan gateway logs for known patterns
-openclaw-watchdog logs --follow   # live SSE event stream
-openclaw-watchdog setup      # interactive config wizard
-openclaw-watchdog install    # register macOS LaunchAgent
+openclaw-keeper start
+openclaw-keeper status
+openclaw-keeper chat       # interactive REPL
+openclaw-keeper diagnose   # scan gateway logs for known patterns
+openclaw-keeper logs --follow   # live SSE event stream
+openclaw-keeper setup      # interactive config wizard
+openclaw-keeper install    # register macOS LaunchAgent
 ```
 
 No build step — pure ESM, runs directly with Node.js ≥18. No test suite.
@@ -44,7 +44,7 @@ The daemon runs as a single Node.js process. All modules are stateless except `d
 
 **Config sources (two separate files):**
 - `~/.openclaw/openclaw.json` — OpenClaw config; Telegram bot tokens are read from `channels.telegram.accounts[id].botToken`
-- `~/.openclaw-watchdog/config.json` — watchdog config: `gatewayUrl`, `checkInterval`, `notifyChatId`, `heartbeatInterval`, `discordWebhookUrl`, `slackWebhookUrl`
+- `~/.openclaw-keeper/config.json` — watchdog config: `gatewayUrl`, `checkInterval`, `notifyChatId`, `heartbeatInterval`, `discordWebhookUrl`, `slackWebhookUrl`
 
 ## Key Design Decisions
 
@@ -76,7 +76,7 @@ Edit `knowledge/patterns.json`. Each entry:
 - `autofix: true` requires a matching entry in `PLAYBOOK_MAP` in `playbooks.mjs`
 - `notify: true` sends a Telegram/webhook alert; warn patterns have 1h cooldown, error patterns use 5-min dedup only
 
-## Runtime Data Directory (`~/.openclaw-watchdog/`)
+## Runtime Data Directory (`~/.openclaw-keeper/`)
 
 | File | Purpose |
 |------|---------|

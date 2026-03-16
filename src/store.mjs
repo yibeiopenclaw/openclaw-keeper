@@ -1,5 +1,5 @@
 /**
- * store.mjs - persistent event log at ~/.openclaw-watchdog/events.json
+ * store.mjs - persistent event log at ~/.openclaw-keeper/events.json
  *
  * Event types:
  *   check_ok | check_fail | restart_start | restart_ok | restart_fail |

@@ -4,7 +4,7 @@
   "description": "Health monitor, auto-recovery daemon and log diagnostics for OpenClaw gateway",
   "type": "module",
   "bin": {
-    "openclaw-watchdog": "./bin/cli.mjs"
+    "openclaw-keeper": "./bin/cli.mjs"
   },
   "files": [
     "bin/",
@@ -29,6 +29,6 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yibeiou/openclaw-watchdog.git"
+    "url": "https://github.com/yibeiou/openclaw-keeper.git"
   }
 }
