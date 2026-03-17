@@ -21,12 +21,23 @@ const DEFAULT_WATCHDOG_CONFIG = {
   slackWebhookUrl: null,     // optional Slack webhook URL
 };
 
+// Legacy data directory (used before rename to openclaw-keeper)
+const LEGACY_WATCHDOG_DIR = path.join(os.homedir(), '.openclaw-watchdog');
+
 /**
  * Ensures the watchdog data directory exists.
+ * Migrates config from the legacy ~/.openclaw-watchdog/ directory if present.
  */
 export function ensureWatchdogDir() {
   if (!fs.existsSync(WATCHDOG_DIR)) {
     fs.mkdirSync(WATCHDOG_DIR, { recursive: true });
+  }
+  // One-time migration: copy config from legacy path if new path has no config
+  const legacyConfig = path.join(LEGACY_WATCHDOG_DIR, 'config.json');
+  if (!fs.existsSync(WATCHDOG_CONFIG_PATH) && fs.existsSync(legacyConfig)) {
+    try {
+      fs.copyFileSync(legacyConfig, WATCHDOG_CONFIG_PATH);
+    } catch {}
   }
 }
 

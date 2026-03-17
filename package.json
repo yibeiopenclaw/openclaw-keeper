@@ -1,6 +1,6 @@
 {
   "name": "openclaw-keeper",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Health monitor, auto-recovery daemon and log diagnostics for OpenClaw gateway",
   "type": "module",
   "bin": {
