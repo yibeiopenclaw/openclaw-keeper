@@ -178,5 +178,14 @@
     "description": "An outbound HTTP request failed. Gateway marked it as non-fatal and continues. Likely transient network issue.",
     "autofix": false,
     "notify": true
+  },
+  {
+    "id": "telegram-polling-stall",
+    "match": "Polling runner stop timed out after \\d+s; forcing restart cycle",
+    "severity": "error",
+    "cause": "Telegram Polling 完全卡死，需要重启 Gateway",
+    "description": "All Telegram bots stopped polling (no getUpdates for ~10 minutes). Gateway is frozen and cannot self-recover. Auto-restarting.",
+    "autofix": true,
+    "notify": true
   }
 ]

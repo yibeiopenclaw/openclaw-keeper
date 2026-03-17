@@ -65,7 +65,8 @@ const PLAYBOOK_MAP = {
   'mutex-lock':        { name: 'restart',   cooldownMs: 3 * 60 * 1000 },
   'out-of-memory':     { name: 'restart',   cooldownMs: 5 * 60 * 1000 },
   'port-in-use':       { name: 'kill-port', cooldownMs: 2 * 60 * 1000 },
-  'invalid-config-key':{ name: 'doctor',    cooldownMs: 10 * 60 * 1000 },
+  'invalid-config-key':     { name: 'doctor',  cooldownMs: 10 * 60 * 1000 },
+  'telegram-polling-stall': { name: 'restart', cooldownMs: 10 * 60 * 1000 },
 };
 
 /**
