@@ -181,10 +181,10 @@
   },
   {
     "id": "telegram-polling-stall",
-    "match": "Polling runner stop timed out after \\d+s; forcing restart cycle",
+    "match": "Polling stall detected.*no getUpdates for \\d+|polling runner stopped.*polling stall detected",
     "severity": "error",
     "cause": "Telegram Polling 完全卡死，需要重启 Gateway",
-    "description": "All Telegram bots stopped polling (no getUpdates for ~10 minutes). Gateway is frozen and cannot self-recover. Auto-restarting.",
+    "description": "Telegram bots stopped polling (no getUpdates for ~4 minutes). Gateway attempts self-recovery; watchdog will force a full gateway restart.",
     "autofix": true,
     "notify": true
   }
