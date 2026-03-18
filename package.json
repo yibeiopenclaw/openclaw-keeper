@@ -3,6 +3,9 @@
   "version": "0.1.6",
   "description": "Health monitor, auto-recovery daemon and log diagnostics for OpenClaw gateway",
   "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
   "bin": {
     "openclaw-keeper": "./bin/cli.mjs"
   },
