@@ -124,11 +124,11 @@ function formatTime(date = new Date()) {
 export async function notifyDown(accounts, chatId, error, diagnosis = null, webhooks = null) {
   const time = formatTime();
   let html =
-    `🐕 <b>OpenClaw Watchdog</b>\n\n` +
+    `🐕 <b>OpenClaw Keeper</b>\n\n` +
     `⚠️ <b>Gateway 无响应</b>\n` +
     `时间: ${time}\n`;
   let plain =
-    `🐕 OpenClaw Watchdog\n\n` +
+    `🐕 OpenClaw Keeper\n\n` +
     `⚠️ Gateway 无响应\n` +
     `时间: ${time}\n`;
 
@@ -146,7 +146,7 @@ export async function notifyDown(accounts, chatId, error, diagnosis = null, webh
     plain += `错误: ${error}\n`;
   }
 
-  html  += `\n正在自动重启...\n\n⚠️ 这是 watchdog 自动推送。当前 openclaw 不可用，无法在此接收回复。`;
+  html  += `\n正在自动重启...\n\n⚠️ 这是 openclaw-keeper 自动推送。当前 openclaw 不可用，无法在此接收回复。`;
   plain += `\n正在自动重启...`;
 
   await sendWebhooks(webhooks, plain);
@@ -164,12 +164,12 @@ export async function notifyDown(accounts, chatId, error, diagnosis = null, webh
 export async function notifyRecovered(accounts, chatId, uptimeSeconds, webhooks = null) {
   const time = formatTime();
   const html =
-    `🐕 <b>OpenClaw Watchdog</b>\n\n` +
+    `🐕 <b>OpenClaw Keeper</b>\n\n` +
     `✅ Gateway 已恢复\n` +
     `重启耗时: ${uptimeSeconds}秒\n` +
     `时间: ${time}`;
   const plain =
-    `🐕 OpenClaw Watchdog\n\n` +
+    `🐕 OpenClaw Keeper\n\n` +
     `✅ Gateway 已恢复\n` +
     `重启耗时: ${uptimeSeconds}秒\n` +
     `时间: ${time}`;
@@ -189,13 +189,13 @@ export async function notifyRecovered(accounts, chatId, uptimeSeconds, webhooks 
 export async function notifyRestartFailed(accounts, chatId, error, webhooks = null) {
   const time = formatTime();
   const html =
-    `🐕 <b>OpenClaw Watchdog</b>\n\n` +
+    `🐕 <b>OpenClaw Keeper</b>\n\n` +
     `❌ Gateway 重启失败\n` +
     `原因: ${escapeHtml(error)}\n` +
     `时间: ${time}\n\n` +
     `请手动检查: <code>openclaw gateway start</code>`;
   const plain =
-    `🐕 OpenClaw Watchdog\n\n` +
+    `🐕 OpenClaw Keeper\n\n` +
     `❌ Gateway 重启失败\n` +
     `原因: ${error}\n` +
     `时间: ${time}\n\n` +
@@ -224,11 +224,11 @@ export async function notifyHeartbeat(accounts, chatId, stats, liveState, webhoo
   const statusLine = liveState.gatewayOk ? `✅ Gateway 正常` : `⚠️ Gateway 异常`;
 
   let html =
-    `🐕 <b>OpenClaw Watchdog</b> [heartbeat]\n\n` +
+    `🐕 <b>OpenClaw Keeper</b> [heartbeat]\n\n` +
     `${statusLine}\n` +
     `正常率: ${upPct}%  |  检查次数: ${total}\n`;
   let plain =
-    `🐕 OpenClaw Watchdog [heartbeat]\n\n` +
+    `🐕 OpenClaw Keeper [heartbeat]\n\n` +
     `${statusLine}\n` +
     `正常率: ${upPct}%  |  检查次数: ${total}\n`;
 
@@ -286,13 +286,13 @@ export async function notifyLogIssue(accounts, chatId, diag, webhooks = null) {
   const sevEmoji = diag.severity === 'error' ? '🔴' : '🟡';
 
   const html =
-    `🐕 <b>OpenClaw Watchdog</b>\n\n` +
+    `🐕 <b>OpenClaw Keeper</b>\n\n` +
     `${sevEmoji} <b>检测到问题：${escapeHtml(diag.cause)}</b>\n\n` +
     `${escapeHtml(diag.description)}\n\n` +
     `时间: ${time}`;
 
   const plain =
-    `🐕 OpenClaw Watchdog\n\n` +
+    `🐕 OpenClaw Keeper\n\n` +
     `${sevEmoji} 检测到问题：${diag.cause}\n\n` +
     `${diag.description}\n\n` +
     `时间: ${time}`;
@@ -313,14 +313,14 @@ export async function notifyLogIssue(accounts, chatId, diag, webhooks = null) {
 export async function notifyNewVersion(accounts, chatId, currentVersion, newVersion, webhooks = null) {
   const time = formatTime();
   const html =
-    `🐕 <b>OpenClaw Watchdog</b>\n\n` +
+    `🐕 <b>OpenClaw Keeper</b>\n\n` +
     `🆕 <b>OpenClaw 有新版本可用</b>\n` +
     `当前版本: ${escapeHtml(currentVersion)}\n` +
     `最新版本: <b>${escapeHtml(newVersion)}</b>\n` +
     `时间: ${time}\n\n` +
     `运行更新: <code>openclaw update</code>`;
   const plain =
-    `🐕 OpenClaw Watchdog\n\n` +
+    `🐕 OpenClaw Keeper\n\n` +
     `🆕 OpenClaw 有新版本可用\n` +
     `当前版本: ${currentVersion}\n` +
     `最新版本: ${newVersion}\n` +
@@ -344,20 +344,20 @@ export async function notifyNewVersion(accounts, chatId, currentVersion, newVers
 export async function notifyPlaybook(accounts, chatId, diag, success, errorMsg, webhooks = null) {
   const time = formatTime();
   const html = success
-    ? `🐕 <b>OpenClaw Watchdog</b>\n\n` +
+    ? `🐕 <b>OpenClaw Keeper</b>\n\n` +
       `🔧 <b>自动修复已执行</b>\n` +
       `原因: ${escapeHtml(diag.cause)}\n` +
       `结果: ✅ Gateway 重启成功\n` +
       `时间: ${time}`
-    : `🐕 <b>OpenClaw Watchdog</b>\n\n` +
+    : `🐕 <b>OpenClaw Keeper</b>\n\n` +
       `🔧 <b>自动修复失败</b>\n` +
       `原因: ${escapeHtml(diag.cause)}\n` +
       `错误: ${escapeHtml(errorMsg || '未知错误')}\n` +
       `时间: ${time}\n\n` +
       `请手动检查: <code>openclaw gateway start</code>`;
   const plain = success
-    ? `🐕 OpenClaw Watchdog\n\n🔧 自动修复已执行\n原因: ${diag.cause}\n结果: ✅ Gateway 重启成功\n时间: ${time}`
-    : `🐕 OpenClaw Watchdog\n\n🔧 自动修复失败\n原因: ${diag.cause}\n错误: ${errorMsg || '未知错误'}\n时间: ${time}`;
+    ? `🐕 OpenClaw Keeper\n\n🔧 自动修复已执行\n原因: ${diag.cause}\n结果: ✅ Gateway 重启成功\n时间: ${time}`
+    : `🐕 OpenClaw Keeper\n\n🔧 自动修复失败\n原因: ${diag.cause}\n错误: ${errorMsg || '未知错误'}\n时间: ${time}`;
 
   await sendWebhooks(webhooks, plain);
   return trySend(accounts, chatId, html);
