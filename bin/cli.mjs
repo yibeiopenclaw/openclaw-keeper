@@ -174,7 +174,7 @@ async function cmdStart(args) {
 function cmdStop() {
   const pid = readPid();
   if (!pid) {
-    console.log(yellow('No PID file found — watchdog may not be running.'));
+    console.log(yellow('No PID file found — keeper may not be running.'));
     process.exit(1);
   }
   if (!isProcessRunning(pid)) {
@@ -187,7 +187,7 @@ function cmdStop() {
     console.log(green(`Watchdog stopped (PID ${pid})`));
     try { fs.unlinkSync(PID_FILE); } catch {}
   } catch (err) {
-    console.error(red(`Failed to stop watchdog: ${err.message}`));
+    console.error(red(`Failed to stop keeper: ${err.message}`));
     process.exit(1);
   }
 }
@@ -869,7 +869,7 @@ async function cmdChat() {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: green('watchdog') + dim(' › '),
+    prompt: green('keeper') + dim(' › '),
   });
 
   rl.prompt();
@@ -910,7 +910,7 @@ ${bold('USAGE')}
   openclaw-keeper <command> [options]
 
 ${bold('COMMANDS')}
-  start [--foreground]   Start the watchdog daemon
+  start [--foreground]   Start the keeper daemon
                           --foreground: run in current process (used by LaunchAgent)
   stop                   Stop the running daemon
   status                 Show gateway status, stats, and recent events
