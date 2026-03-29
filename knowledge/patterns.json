@@ -123,7 +123,7 @@
     "cause": "LLM 请求超时",
     "description": "Model API did not respond within the timeout window. May be transient overload on the provider side.",
     "autofix": false,
-    "notify": true
+    "notify": false
   },
   {
     "id": "telegram-502",
@@ -186,6 +186,6 @@
     "cause": "Telegram Polling 完全卡死，需要重启 Gateway",
     "description": "Telegram bots stopped polling. Either the polling runner stop timed out (forcing restart cycle), or no getUpdates for ~3+ minutes. Gateway self-recovers; watchdog forces a full restart if the stall recurs.",
     "autofix": true,
-    "notify": true
+    "notify": false
   }
 ]
